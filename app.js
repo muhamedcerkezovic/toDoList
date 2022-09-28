@@ -4,6 +4,7 @@ const app = express();
 var items=["Buy Food","Cook Food","Eat Food"];
 app.use(bodyParser.urlencoded({extended:true}));
 app.set('view engine', 'ejs');
+app.use(express.static("public"));
 
 app.get("/", function (req, res) {
     var today = new Date();
