@@ -1,29 +1,75 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
-var items=["Buy Food","Cook Food","Eat Food"];
-app.use(bodyParser.urlencoded({extended:true}));
+const mongoose = require("mongoose");
+
+app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
 
-app.get("/", function (req, res) {
-    var today = new Date();
-   var options={
-    weekday:"long",
-    day:"numeric",
-    month:"long"
-   };
-   var day=today.toLocaleDateString("en-US",options);
+mongoose.connect("mongodb://localhost:27017/todolistDB", { useNewUrlParser: true });
 
+const itemsSchema = {
+    name: String
+};
 
-    res.render("list", { kindOfDay: day, newListItems: items });
+const Item = mongoose.model("Item", itemsSchema);
+
+const buyFood = new Item({
+    name: "Buy Food"
+});
+const cookFood = new Item({
+    name: "Cook Food"
 })
-app.post("/",function(req,res){
-    var item=req.body.newItem;
-    items.push(item)
+const eatFood = new Item({
+    name: "Eat Food"
+})
+
+const defaultItems = [buyFood, cookFood, eatFood];
+
+
+
+app.get("/", function (req, res) {
+    Item.find({}, function (err, results) {
+        if (results.length === 0) {
+            Item.insertMany(defaultItems, function (err) {
+                if (err) {
+                    console.log(err)
+                } else {
+                    console.log("Succesfully added new items ! ! ! ")
+                }
+            });
+            res.redirect("/");
+        } else {
+            res.render("list", { kindOfDay: "Today", newListItems: results });
+
+        }
+
+    });
+
+})
+app.post("/", function (req, res) {
+    const itemName = req.body.newItem;
+    const item = new Item({
+        name: itemName
+    });
+    item.save();
     res.redirect("/");
 
 });
+
+app.post("/delete",function(req,res){
+const checkedItemId=req.body.checkbox;
+
+Item.findByIdAndRemove(checkedItemId,function(err){
+    if(err){
+        console.log(err)
+    }else{
+        console.log("Deleted item");
+        res.redirect("/");
+    }
+})
+})
 app.listen(3000, function () {
     console.log("Server is up and ready on 3000");
 })
