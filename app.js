@@ -46,7 +46,7 @@ app.get("/", function (req, res) {
             });
             res.redirect("/");
         } else {
-            res.render("list", { kindOfDay: "Today", newListItems: results });
+            res.render("list", { listTitle: "Today", newListItems: results });
 
         }
 
@@ -66,7 +66,7 @@ List.findOne({name:customListName},function(err,foundList){
             list.save();
             res.redirect("/"+customListName)
         }else{
-            res.render("list",{ kindOfDay: foundList.name, newListItems: foundList.items })
+            res.render("list",{ listTitle: foundList.name, newListItems: foundList.items })
         }
     }
 })
@@ -75,11 +75,22 @@ List.findOne({name:customListName},function(err,foundList){
 
 app.post("/", function (req, res) {
     const itemName = req.body.newItem;
+    const listName= req.body.list;
     const item = new Item({
         name: itemName
     });
-    item.save();
-    res.redirect("/");
+
+    if(listName==="Today"){
+        item.save();
+        res.redirect("/");
+    }else{
+        List.findOne({name:listName},function(err,foundList){
+            foundList.items.push(item);
+            foundList.save();
+            res.redirect("/"+listName)
+        })
+    }
+    
 
 });
 
