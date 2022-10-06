@@ -15,18 +15,23 @@ const itemsSchema = {
 
 const Item = mongoose.model("Item", itemsSchema);
 
-const buyFood = new Item({
-    name: "Buy Food"
+const addItems = new Item({
+    name: "You can add new items"
 });
-const cookFood = new Item({
-    name: "Cook Food"
+const removeItems = new Item({
+    name: "You can remove items"
 })
-const eatFood = new Item({
-    name: "Eat Food"
+const customLists = new Item({
+    name: "You can make custom lists"
 })
 
-const defaultItems = [buyFood, cookFood, eatFood];
+const defaultItems = [addItems, removeItems, customLists];
 
+const listSchema={
+    name:String,
+    items:[itemsSchema]
+};
+const List= mongoose.model("List",listSchema);
 
 
 app.get("/", function (req, res) {
@@ -47,7 +52,27 @@ app.get("/", function (req, res) {
 
     });
 
+});
+
+app.get("/:customListName",function(req,res){
+const customListName=req.params.customListName;
+List.findOne({name:customListName},function(err,foundList){
+    if(!err){
+        if(!foundList){
+            const list=new List({
+                name: customListName,
+                items:defaultItems
+            });
+            list.save();
+            res.redirect("/"+customListName)
+        }else{
+            res.render("list",{ kindOfDay: foundList.name, newListItems: foundList.items })
+        }
+    }
 })
+
+});
+
 app.post("/", function (req, res) {
     const itemName = req.body.newItem;
     const item = new Item({
